@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本人车票 - 12306</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #f0f0f0;
+            color: #333;
+            line-height: 1.3;
+            font-size: 14px;
+        }
+        
+        /* 状态栏 */
+        .status-bar {
+            background: #3b99fc;
+            color: white;
+            padding: 4px 12px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* 顶部导航栏 */
+        .header {
+            background: #3b99fc;
+            color: white;
+            padding: 8px 12px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .back-btn {
+            font-size: 22px;
+            cursor: pointer;
+            width: 24px;
+            margin-left: -4px;
+        }
+        
+        .header-title {
+            font-size: 17px;
+            font-weight: 500;
+        }
+        
+        .more-btn {
+            font-size: 18px;
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+        
+        /* 提示信息 */
+        .notice-bar {
+            background: #fff9e6;
+            padding: 10px 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .notice-icon {
+            font-size: 14px;
+            margin-top: 1px;
+        }
+        
+        .username {
+            color: #333;
+        }
+        
+        /* 儿童申报 */
+        .child-declare {
+            background: white;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .child-text {
+            color: #ff6600;
+            font-size: 14px;
+        }
+        
+        .child-add {
+            color: #ff6600;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        /* 乘车日期 */
+        .travel-date {
+            background: #f5f5f5;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #ff6600;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        /* 主内容区 - 窄边距 */
+        .content-wrapper {
+            background: #f0f0f0;
+            padding: 8px;
+        }
+        
+        /* 车票卡片 - 更紧凑 */
+        .ticket-card {
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        /* 订单头 */
+        .ticket-header {
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        
+        .order-info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .order-no {
+            color: #666;
+            font-family: monospace;
+        }
+        
+        .copy-btn {
+            border: 1px solid #ddd;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #999;
+            margin-left: 4px;
+        }
+        
+        .valid-info {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        /* 主要行程信息 - 更紧凑 */
+        .ticket-main {
+            padding: 16px 12px 12px;
+        }
+        
+        .route-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .station-info {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .time {
+            font-size: 28px;
+            font-weight: 600;
+            color: #000;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        
+        .station-name {
+            font-size: 15px;
+            color: #333;
+        }
+        
+        .train-info {
+            text-align: center;
+            flex: 1.2;
+            position: relative;
+            padding: 0 4px;
+        }
+        
+        .train-no {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .train-line-box {
+            position: relative;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .train-line {
+            width: 80%;
+            height: 1.5px;
+            background: #3b99fc;
+            position: relative;
+        }
+        
+        .train-arrow {
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left: 6px solid #3b99fc;
+        }
+        
+        .train-date {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+        
+        /* 支付信息 */
+        .payment-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .paid-tag {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .ticket-type {
+            border: 1px solid #3b99fc;
+            color: #3b99fc;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .pay-method {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+        }
+        
+        .method-tag {
+            border: 1px solid #e0e0e0;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #999;
+        }
+        
+        /* 学生票提示 */
+        .student-notice {
+            background: #fff8f0;
+            border: 1px solid #ffcc99;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            display: flex;
+            gap: 6px;
+            align-items: flex-start;
+        }
+        
+        .warning-icon {
+            width: 16px;
+            height: 16px;
+            background: #ff9500;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        
+        .student-notice-text {
+            font-size: 13px;
+            color: #ff6600;
+            line-height: 1.4;
+            flex: 1;
+        }
+        
+        /* 座位信息 */
+        .seat-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0 0;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 10px;
+        }
+        
+        .seat-detail {
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .price-info {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+        
+        .price {
+            font-size: 22px;
+            color: #ff6600;
+            font-weight: 600;
+        }
+        
+        .price-symbol {
+            font-size: 13px;
+        }
+        
+        .discount {
+            border: 1px solid #e0e0e0;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #999;
+        }
+        
+        /* 操作按钮 */
+        .action-buttons {
+            display: flex;
+            border-top: 1px solid #f0f0f0;
+            background: #fafafa;
+            padding: 10px 0;
+        }
+        
+        .action-btn {
+            flex: 1;
+            text-align: center;
+            color: #3b99fc;
+            font-size: 14px;
+            border-right: 1px solid #e8e8e8;
+        }
+        
+        .action-btn:last-child {
+            border-right: none;
+        }
+        
+        /* 附加服务 */
+        .extra-services {
+            display: flex;
+            border-top: 1px solid #f0f0f0;
+            background: #f5f5f5;
+            padding: 12px 0;
+        }
+        
+        .service-item {
+            flex: 1;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .service-item:last-child {
+            border-right: none;
+        }
+        
+        /* 编辑入口 */
+        .edit-trigger {
+            position: fixed;
+            top: 40px;
+            right: 6px;
+            width: 4px;
+            height: 4px;
+            background: #52c41a;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1000;
+            opacity: 0.3;
+        }
+        
+        .edit-trigger:hover {
+            opacity: 0.8;
+            transform: scale(2);
+        }
+        
+        /* 弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #f0f0f0;
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            background: #3b99fc;
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .modal-close {
+            font-size: 22px;
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-body {
+            padding: 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .edit-section {
+            margin-bottom: 12px;
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .btn-small {
+            padding: 4px 12px;
+            border-radius: 4px;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 10px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .modal-footer {
+            padding: 12px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 10px;
+            background: white;
+        }
+        
+        .btn-full {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        
+        .btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+        
+        .btn-save {
+            background: #3b99fc;
+            color: white;
+        }
+        
+        .add-block-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #3b99fc;
+            background: #e6f7ff;
+            color: #3b99fc;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        
+        .user-info-edit {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="edit-trigger" onclick="openModal()"></div>
+    
+    <div class="status-bar">
+        <span>17:56:29</span>
+        <div>
+            <span style="margin-right: 6px;">5G</span>
+            <span>48%</span>
+        </div>
+    </div>
+    
+    <div class="header">
+        <span class="back-btn">‹</span>
+        <span class="header-title">本人车票</span>
+        <span class="more-btn">···</span>
+    </div>
+    
+    <div class="notice-bar">
+        <span class="notice-icon">💡</span>
+        <span>只显示当前12306账号本人"<span class="username" id="display-username">theforeveriris</span>"的出行车票信息。</span>
+    </div>
+    
+    <div class="child-declare">
+        <span class="child-text">免费乘车儿童申报（未满6周岁）</span>
+        <span class="child-add">去添加 ›</span>
+    </div>
+    
+    <div class="travel-date">
+        乘车日期：2026年2月27日 周五
+    </div>
+    
+    <div class="content-wrapper" id="ticket-container"></div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">编辑车票信息</span>
+                <span class="modal-close" onclick="closeModal()">×</span>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer">
+                <button class="btn-full btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn-full btn-save" onclick="saveChanges()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ticketData = {
+            username: "theforeveriris",
+            blocks: [
+                {
+                    id: 1,
+                    orderNo: "EF5423654",
+                    trainNo: "C1423",
+                    fromStation: "参宿四",
+                    toStation: "海山一",
+                    startTime: "06:50",
+                    endTime: "06:52",
+                    date: "2月27日",
+                    week: "周五",
+                    isStudent: true,
+                    seatType: "二等座",
+                    carriage: "17车",
+                    seatNo: "24F号",
+                    price: "85",
+                    discount: "6折",
+                    payMethod: "非现金支付",
+                    buyMethod: "线上购买"
+                },
+                {
+                    id: 2,
+                    orderNo: "EF43524561",
+                    trainNo: "K3568",
+                    fromStation: "海山一",
+                    toStation: "天津四",
+                    startTime: "09:20",
+                    endTime: "11:00",
+                    date: "2月27日",
+                    week: "周五",
+                    isStudent: true,
+                    seatType: "硬座",
+                    carriage: "03 车",
+                    seatNo: "131 号",
+                    price: "22",
+                    discount: "5折",
+                    payMethod: "非现金支付",
+                    buyMethod: "线上购买"
+                }
+            ]
+        };
+
+        function render() {
+            const container = document.getElementById('ticket-container');
+            document.getElementById('display-username').textContent = ticketData.username;
+            
+            let html = '';
+            ticketData.blocks.forEach((block) => {
+                html += renderBlock(block);
+            });
+            container.innerHTML = html;
+        }
+
+        function renderBlock(block) {
+            const studentNotice = block.isStudent ? `
+                <div class="student-notice">
+                    <span class="warning-icon">!</span>
+                    <span class="student-notice-text">您购买的是学生票，请务必随身携带学生证凭证乘车，以便铁路工作人员在车站和列车上核验。</span>
+                </div>
+            ` : '';
+            
+            const ticketTypeText = block.isStudent ? '学生票' : '成人票';
+            
+            // 折扣为空时不显示折扣标签
+            const discountHtml = block.discount && block.discount.trim() !== '' 
+                ? `<span class="discount">${block.discount}</span>` 
+                : '';
+            
+            return `
+                <div class="ticket-card" data-id="${block.id}">
+                    <div class="ticket-header">
+                        <div class="order-info">
+                            <span>订单号：</span>
+                            <span class="order-no">${block.orderNo}</span>
+                            <span class="copy-btn">复制</span>
+                        </div>
+                        <span class="valid-info">车票当日当次有效</span>
+                    </div>
+                    
+                    <div class="ticket-main">
+                        <div class="route-info">
+                            <div class="station-info">
+                                <div class="time">${block.startTime}</div>
+                                <div class="station-name">${block.fromStation}</div>
+                            </div>
+                            <div class="train-info">
+                                <div class="train-no">${block.trainNo}</div>
+                                <div class="train-line-box">
+                                    <div class="train-line">
+                                        <div class="train-arrow"></div>
+                                    </div>
+                                </div>
+                                <div class="train-date">${block.date}（${block.week}）</div>
+                            </div>
+                            <div class="station-info">
+                                <div class="time">${block.endTime}</div>
+                                <div class="station-name">${block.toStation}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-info">
+                            <span class="paid-tag">已支付</span>
+                            <span class="ticket-type">${ticketTypeText}</span>
+                            <div class="pay-method">
+                                <span class="method-tag">${block.payMethod}</span>
+                                <span class="method-tag">${block.buyMethod}</span>
+                            </div>
+                        </div>
+                        
+                        ${studentNotice}
+                        
+                        <div class="seat-info">
+                            <span class="seat-detail">${block.seatType} ${block.carriage} ${block.seatNo}</span>
+                            <div class="price-info">
+                                <span class="price"><span class="price-symbol">¥</span>${block.price}</span>
+                                ${discountHtml}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <div class="action-btn">改签</div>
+                        <div class="action-btn">退票</div>
+                        <div class="action-btn">变更到站</div>
+                    </div>
+                    
+                    <div class="extra-services">
+                        <div class="service-item">餐饮 · 特产</div>
+                        <div class="service-item">订酒店</div>
+                        <div class="service-item">租车 · 约车</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openModal() {
+            const modal = document.getElementById('editModal');
+            const modalBody = document.getElementById('modal-body');
+            
+            let html = `
+                <div class="user-info-edit">
+                    <div class="form-group">
+                        <label class="form-label">用户姓名</label>
+                        <input type="text" class="form-input" id="edit-username" value="${ticketData.username}">
+                    </div>
+                </div>
+            `;
+            
+            ticketData.blocks.forEach((block, index) => {
+                html += `
+                    <div class="edit-section" data-block-id="${block.id}">
+                        <div class="section-header">
+                            <span class="section-title">车票 ${index + 1}</span>
+                            ${ticketData.blocks.length > 1 ? `<button class="btn-small btn-danger" onclick="deleteBlock(${block.id})">删除</button>` : ''}
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">订单号</label>
+                                <input type="text" class="form-input" data-field="orderNo" value="${block.orderNo}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">车次</label>
+                                <input type="text" class="form-input" data-field="trainNo" value="${block.trainNo}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">出发站</label>
+                                <input type="text" class="form-input" data-field="fromStation" value="${block.fromStation}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">到达站</label>
+                                <input type="text" class="form-input" data-field="toStation" value="${block.toStation}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">出发时间</label>
+                                <input type="text" class="form-input" data-field="startTime" value="${block.startTime}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">到达时间</label>
+                                <input type="text" class="form-input" data-field="endTime" value="${block.endTime}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">日期</label>
+                                <input type="text" class="form-input" data-field="date" value="${block.date}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">星期</label>
+                                <input type="text" class="form-input" data-field="week" value="${block.week}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">座位类型</label>
+                                <input type="text" class="form-input" data-field="seatType" value="${block.seatType}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">车厢号</label>
+                                <input type="text" class="form-input" data-field="carriage" value="${block.carriage}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">座位号</label>
+                                <input type="text" class="form-input" data-field="seatNo" value="${block.seatNo}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">价格</label>
+                                <input type="text" class="form-input" data-field="price" value="${block.price}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">折扣（留空则不显示）</label>
+                                <input type="text" class="form-input" data-field="discount" value="${block.discount}" placeholder="例如：6折，不填则不显示">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">支付方式</label>
+                                <input type="text" class="form-input" data-field="payMethod" value="${block.payMethod}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">购买方式</label>
+                            <input type="text" class="form-input" data-field="buyMethod" value="${block.buyMethod}">
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="student-${block.id}" data-field="isStudent" ${block.isStudent ? 'checked' : ''}>
+                            <label for="student-${block.id}">学生票（显示橙色提示）</label>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `<button class="add-block-btn" onclick="addNewBlock()">+ 添加新车票块</button>`;
+            modalBody.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function saveChanges() {
+            const usernameInput = document.getElementById('edit-username');
+            if (usernameInput) {
+                ticketData.username = usernameInput.value;
+            }
+            
+            const sections = document.querySelectorAll('.edit-section');
+            sections.forEach((section) => {
+                const blockId = parseInt(section.dataset.blockId);
+                const block = ticketData.blocks.find(b => b.id === blockId);
+                
+                if (block) {
+                    const inputs = section.querySelectorAll('input[type="text"]');
+                    inputs.forEach(input => {
+                        const field = input.dataset.field;
+                        if (field) {
+                            block[field] = input.value;
+                        }
+                    });
+                    
+                    const checkbox = section.querySelector('input[type="checkbox"]');
+                    if (checkbox) {
+                        block.isStudent = checkbox.checked;
+                    }
+                }
+            });
+            
+            render();
+            closeModal();
+        }
+
+        function addNewBlock() {
+            const newId = Math.max(...ticketData.blocks.map(b => b.id), 0) + 1;
+            const lastBlock = ticketData.blocks[ticketData.blocks.length - 1];
+            
+            const newBlock = {
+                id: newId,
+                orderNo: "EF" + Math.floor(Math.random() * 100000000),
+                trainNo: "G" + Math.floor(Math.random() * 10000),
+                fromStation: "出发站",
+                toStation: "到达站",
+                startTime: "08:00",
+                endTime: "10:00",
+                date: lastBlock ? lastBlock.date : "2月27日",
+                week: lastBlock ? lastBlock.week : "周五",
+                isStudent: false,
+                seatType: "二等座",
+                carriage: "05车",
+                seatNo: "01A号",
+                price: "100",
+                discount: "", // 默认空折扣
+                payMethod: "非现金支付",
+                buyMethod: "线上购买"
+            };
+            
+            ticketData.blocks.push(newBlock);
+            openModal();
+        }
+
+        function deleteBlock(id) {
+            if (ticketData.blocks.length <= 1) {
+                alert("至少保留一个车票块");
+                return;
+            }
+            ticketData.blocks = ticketData.blocks.filter(b => b.id !== id);
+            openModal();
+        }
+
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        render();
+    </script>
+</body>
+</html>
