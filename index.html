@@ -584,6 +584,19 @@
             border-radius: 8px;
             margin-bottom: 12px;
         }
+        
+        .global-date-edit {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .global-date-edit .form-label {
+            color: #1890ff;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -613,7 +626,8 @@
         <span class="child-add">去添加 ›</span>
     </div>
     
-    <div class="travel-date">
+    <!-- 动态渲染的乘车日期 -->
+    <div class="travel-date" id="travel-date">
         乘车日期：2026年2月27日 周五
     </div>
     
@@ -634,8 +648,10 @@
     </div>
 
     <script>
+        // 添加全局日期字段到数据结构中
         let ticketData = {
             username: "theforeveriris",
+            globalDate: "2026年2月27日 周五", // 全局日期，控制顶部显示
             blocks: [
                 {
                     id: 1,
@@ -678,9 +694,17 @@
             ]
         };
 
+        // 标记是否正在编辑中（防止删除/添加时重复渲染）
+        let isEditing = false;
+
         function render() {
             const container = document.getElementById('ticket-container');
-            document.getElementById('display-username').textContent = ticketData.username;
+            const displayUsername = document.getElementById('display-username');
+            const travelDate = document.getElementById('travel-date');
+            
+            displayUsername.textContent = ticketData.username;
+            // 动态渲染顶部日期
+            travelDate.textContent = `乘车日期：${ticketData.globalDate}`;
             
             let html = '';
             ticketData.blocks.forEach((block) => {
@@ -772,6 +796,7 @@
         }
 
         function openModal() {
+            isEditing = true;
             const modal = document.getElementById('editModal');
             const modalBody = document.getElementById('modal-body');
             
@@ -782,121 +807,143 @@
                         <input type="text" class="form-input" id="edit-username" value="${ticketData.username}">
                     </div>
                 </div>
+                
+                <div class="global-date-edit">
+                    <div class="form-group">
+                        <label class="form-label">📅 顶部乘车日期（全局）</label>
+                        <input type="text" class="form-input" id="edit-global-date" value="${ticketData.globalDate}" placeholder="例如：2026年2月27日 周五">
+                        <div style="font-size: 11px; color: #666; margin-top: 4px;">修改此日期将改变页面顶部的"乘车日期"显示</div>
+                    </div>
+                </div>
             `;
             
             ticketData.blocks.forEach((block, index) => {
-                html += `
-                    <div class="edit-section" data-block-id="${block.id}">
-                        <div class="section-header">
-                            <span class="section-title">车票 ${index + 1}</span>
-                            ${ticketData.blocks.length > 1 ? `<button class="btn-small btn-danger" onclick="deleteBlock(${block.id})">删除</button>` : ''}
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">订单号</label>
-                                <input type="text" class="form-input" data-field="orderNo" value="${block.orderNo}">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">车次</label>
-                                <input type="text" class="form-input" data-field="trainNo" value="${block.trainNo}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">出发站</label>
-                                <input type="text" class="form-input" data-field="fromStation" value="${block.fromStation}">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">到达站</label>
-                                <input type="text" class="form-input" data-field="toStation" value="${block.toStation}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">出发时间</label>
-                                <input type="text" class="form-input" data-field="startTime" value="${block.startTime}">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">到达时间</label>
-                                <input type="text" class="form-input" data-field="endTime" value="${block.endTime}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">日期</label>
-                                <input type="text" class="form-input" data-field="date" value="${block.date}">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">星期</label>
-                                <input type="text" class="form-input" data-field="week" value="${block.week}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">座位类型</label>
-                                <input type="text" class="form-input" data-field="seatType" value="${block.seatType}">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">车厢号</label>
-                                <input type="text" class="form-input" data-field="carriage" value="${block.carriage}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">座位号</label>
-                                <input type="text" class="form-input" data-field="seatNo" value="${block.seatNo}">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">价格</label>
-                                <input type="text" class="form-input" data-field="price" value="${block.price}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">折扣（留空则不显示）</label>
-                                <input type="text" class="form-input" data-field="discount" value="${block.discount}" placeholder="例如：6折，不填则不显示">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">支付方式</label>
-                                <input type="text" class="form-input" data-field="payMethod" value="${block.payMethod}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">购买方式</label>
-                            <input type="text" class="form-input" data-field="buyMethod" value="${block.buyMethod}">
-                        </div>
-                        
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="student-${block.id}" data-field="isStudent" ${block.isStudent ? 'checked' : ''}>
-                            <label for="student-${block.id}">学生票（显示橙色提示）</label>
-                        </div>
-                    </div>
-                `;
+                html += renderEditForm(block, index);
             });
             
             html += `<button class="add-block-btn" onclick="addNewBlock()">+ 添加新车票块</button>`;
+            
             modalBody.innerHTML = html;
             modal.classList.add('active');
         }
 
+        function renderEditForm(block, index) {
+            return `
+                <div class="edit-section" data-block-id="${block.id}">
+                    <div class="section-header">
+                        <span class="section-title">车票 ${index + 1}</span>
+                        ${ticketData.blocks.length > 1 ? `<button class="btn-small btn-danger" onclick="deleteBlock(${block.id})">删除</button>` : ''}
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">订单号</label>
+                            <input type="text" class="form-input" data-field="orderNo" value="${block.orderNo}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">车次</label>
+                            <input type="text" class="form-input" data-field="trainNo" value="${block.trainNo}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">出发站</label>
+                            <input type="text" class="form-input" data-field="fromStation" value="${block.fromStation}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">到达站</label>
+                            <input type="text" class="form-input" data-field="toStation" value="${block.toStation}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">出发时间</label>
+                            <input type="text" class="form-input" data-field="startTime" value="${block.startTime}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">到达时间</label>
+                            <input type="text" class="form-input" data-field="endTime" value="${block.endTime}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">日期（块内显示）</label>
+                            <input type="text" class="form-input" data-field="date" value="${block.date}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">星期（块内显示）</label>
+                            <input type="text" class="form-input" data-field="week" value="${block.week}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">座位类型</label>
+                            <input type="text" class="form-input" data-field="seatType" value="${block.seatType}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">车厢号</label>
+                            <input type="text" class="form-input" data-field="carriage" value="${block.carriage}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">座位号</label>
+                            <input type="text" class="form-input" data-field="seatNo" value="${block.seatNo}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">价格</label>
+                            <input type="text" class="form-input" data-field="price" value="${block.price}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">折扣（留空则不显示）</label>
+                            <input type="text" class="form-input" data-field="discount" value="${block.discount}" placeholder="例如：6折，不填则不显示">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">支付方式</label>
+                            <input type="text" class="form-input" data-field="payMethod" value="${block.payMethod}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">购买方式</label>
+                        <input type="text" class="form-input" data-field="buyMethod" value="${block.buyMethod}">
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="student-${block.id}" data-field="isStudent" ${block.isStudent ? 'checked' : ''}>
+                        <label for="student-${block.id}">学生票（显示橙色提示）</label>
+                    </div>
+                </div>
+            `;
+        }
+
         function closeModal() {
+            isEditing = false;
             document.getElementById('editModal').classList.remove('active');
         }
 
         function saveChanges() {
+            // 保存用户名
             const usernameInput = document.getElementById('edit-username');
             if (usernameInput) {
                 ticketData.username = usernameInput.value;
             }
             
+            // 保存全局日期
+            const globalDateInput = document.getElementById('edit-global-date');
+            if (globalDateInput) {
+                ticketData.globalDate = globalDateInput.value;
+            }
+            
+            // 保存每个块的数据
             const sections = document.querySelectorAll('.edit-section');
             sections.forEach((section) => {
                 const blockId = parseInt(section.dataset.blockId);
@@ -923,6 +970,30 @@
         }
 
         function addNewBlock() {
+            // 先保存当前编辑的数据，避免丢失
+            const usernameInput = document.getElementById('edit-username');
+            if (usernameInput) ticketData.username = usernameInput.value;
+            
+            const globalDateInput = document.getElementById('edit-global-date');
+            if (globalDateInput) ticketData.globalDate = globalDateInput.value;
+            
+            // 保存现有块的数据
+            const sections = document.querySelectorAll('.edit-section');
+            sections.forEach((section) => {
+                const blockId = parseInt(section.dataset.blockId);
+                const block = ticketData.blocks.find(b => b.id === blockId);
+                if (block) {
+                    const inputs = section.querySelectorAll('input[type="text"]');
+                    inputs.forEach(input => {
+                        const field = input.dataset.field;
+                        if (field) block[field] = input.value;
+                    });
+                    const checkbox = section.querySelector('input[type="checkbox"]');
+                    if (checkbox) block.isStudent = checkbox.checked;
+                }
+            });
+            
+            // 创建新块
             const newId = Math.max(...ticketData.blocks.map(b => b.id), 0) + 1;
             const lastBlock = ticketData.blocks[ticketData.blocks.length - 1];
             
@@ -941,13 +1012,38 @@
                 carriage: "05车",
                 seatNo: "01A号",
                 price: "100",
-                discount: "", // 默认空折扣
+                discount: "",
                 payMethod: "非现金支付",
                 buyMethod: "线上购买"
             };
             
             ticketData.blocks.push(newBlock);
-            openModal();
+            
+            // 重新渲染弹窗内容，保持编辑状态
+            const modalBody = document.getElementById('modal-body');
+            let html = `
+                <div class="user-info-edit">
+                    <div class="form-group">
+                        <label class="form-label">用户姓名</label>
+                        <input type="text" class="form-input" id="edit-username" value="${ticketData.username}">
+                    </div>
+                </div>
+                
+                <div class="global-date-edit">
+                    <div class="form-group">
+                        <label class="form-label">📅 顶部乘车日期（全局）</label>
+                        <input type="text" class="form-input" id="edit-global-date" value="${ticketData.globalDate}" placeholder="例如：2026年2月27日 周五">
+                        <div style="font-size: 11px; color: #666; margin-top: 4px;">修改此日期将改变页面顶部的"乘车日期"显示</div>
+                    </div>
+                </div>
+            `;
+            
+            ticketData.blocks.forEach((block, index) => {
+                html += renderEditForm(block, index);
+            });
+            
+            html += `<button class="add-block-btn" onclick="addNewBlock()">+ 添加新车票块</button>`;
+            modalBody.innerHTML = html;
         }
 
         function deleteBlock(id) {
@@ -955,8 +1051,60 @@
                 alert("至少保留一个车票块");
                 return;
             }
+            
+            // 先保存当前编辑的数据，避免丢失
+            const usernameInput = document.getElementById('edit-username');
+            if (usernameInput) ticketData.username = usernameInput.value;
+            
+            const globalDateInput = document.getElementById('edit-global-date');
+            if (globalDateInput) ticketData.globalDate = globalDateInput.value;
+            
+            // 保存现有块的数据（除了要删除的）
+            const sections = document.querySelectorAll('.edit-section');
+            sections.forEach((section) => {
+                const blockId = parseInt(section.dataset.blockId);
+                if (blockId !== id) {
+                    const block = ticketData.blocks.find(b => b.id === blockId);
+                    if (block) {
+                        const inputs = section.querySelectorAll('input[type="text"]');
+                        inputs.forEach(input => {
+                            const field = input.dataset.field;
+                            if (field) block[field] = input.value;
+                        });
+                        const checkbox = section.querySelector('input[type="checkbox"]');
+                        if (checkbox) block.isStudent = checkbox.checked;
+                    }
+                }
+            });
+            
+            // 删除指定块
             ticketData.blocks = ticketData.blocks.filter(b => b.id !== id);
-            openModal();
+            
+            // 重新渲染弹窗内容
+            const modalBody = document.getElementById('modal-body');
+            let html = `
+                <div class="user-info-edit">
+                    <div class="form-group">
+                        <label class="form-label">用户姓名</label>
+                        <input type="text" class="form-input" id="edit-username" value="${ticketData.username}">
+                    </div>
+                </div>
+                
+                <div class="global-date-edit">
+                    <div class="form-group">
+                        <label class="form-label">📅 顶部乘车日期（全局）</label>
+                        <input type="text" class="form-input" id="edit-global-date" value="${ticketData.globalDate}" placeholder="例如：2026年2月27日 周五">
+                        <div style="font-size: 11px; color: #666; margin-top: 4px;">修改此日期将改变页面顶部的"乘车日期"显示</div>
+                    </div>
+                </div>
+            `;
+            
+            ticketData.blocks.forEach((block, index) => {
+                html += renderEditForm(block, index);
+            });
+            
+            html += `<button class="add-block-btn" onclick="addNewBlock()">+ 添加新车票块</button>`;
+            modalBody.innerHTML = html;
         }
 
         document.getElementById('editModal').addEventListener('click', function(e) {
